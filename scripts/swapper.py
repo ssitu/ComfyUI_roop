@@ -114,6 +114,7 @@ def swap_face(
     target_img: Image.Image,
     model: Union[str, None] = None,
     faces_index: Set[int] = {0},
+    reference_faces_index: Set[int] = {0},
     upscale_options: Union[UpscaleOptions, None] = None,
 ) -> ImageResult:
     result_image = target_img
@@ -131,8 +132,21 @@ def swap_face(
             source_img = Image.open(io.BytesIO(img_bytes))
         source_img = cv2.cvtColor(np.array(source_img), cv2.COLOR_RGB2BGR)
         target_img = cv2.cvtColor(np.array(target_img), cv2.COLOR_RGB2BGR)
-        source_face = get_face_single(source_img, face_index=0)
-        if source_face is not None:
+
+        #
+        # Get source faces
+        #
+        source_faces = []
+        for face_num in reference_faces_index:
+            source_face = get_face_single(source_img, face_index=face_num)
+            if source_face is not None:
+                source_faces.append(source_face)
+            else:
+                logger.info(f"No source face found for {face_num}")
+        logger.info(f"Found {len(source_faces)} source faces")
+        source_face_idx = 0
+
+        if len(source_faces) > 0:
             result = target_img
             model_path = os.path.join(swapper_path, model)
             face_swapper = getFaceSwapModel(model_path)
@@ -140,9 +154,15 @@ def swap_face(
             for face_num in faces_index:
                 target_face = get_face_single(target_img, face_index=face_num)
                 if target_face is not None:
+
+                    source_face = source_faces[source_face_idx]
+                    logger.info(f"Swapping source face {source_face_idx} onto target face {face_num}")
+
                     result = face_swapper.get(result, target_face, source_face)
                 else:
                     logger.info(f"No target face found for {face_num}")
+
+                source_face_idx = (source_face_idx + 1) % len(source_faces)
 
             result_image = Image.fromarray(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
             if upscale_options is not None:

@@ -131,6 +131,7 @@ class FaceSwapScript(scripts.Script):
         img,
         enable,
         faces_index,
+        reference_faces_index,
         model,
         face_restorer_name,
         face_restorer_visibility,
@@ -150,14 +151,21 @@ class FaceSwapScript(scripts.Script):
         self.swap_in_generated = swap_in_generated
         self.model = model
         self.faces_index = {
-            int(x) for x in faces_index.strip(",").split(",") if x.isnumeric()
+            int(y) for x in faces_index.split(",") if (y := x.strip()).isnumeric()
+        }
+        self.reference_faces_index = {
+            int(y) for x in reference_faces_index.split(",") if (y := x.strip()).isnumeric()
         }
         if len(self.faces_index) == 0:
             self.faces_index = {0}
+        if len(self.reference_faces_index) == 0:
+            self.reference_faces_index = {0}
+        logger.info(f"Faces index: {self.faces_index}")
+        logger.info(f"Reference faces index: {self.reference_faces_index}")
         if self.enable:
             if self.source is not None:
                 if isinstance(p, StableDiffusionProcessingImg2Img) and swap_in_source:
-                    logger.info(f"roop enabled, face index %s", self.faces_index)
+                    logger.info(f"roop enabled, face index %s, reference face index %s", self.faces_index, self.reference_faces_index)
 
                     for i in range(len(p.init_images)):
                         logger.info(f"Swap in source %s", i)
@@ -165,6 +173,7 @@ class FaceSwapScript(scripts.Script):
                             self.source,
                             p.init_images[i],
                             faces_index=self.faces_index,
+                            reference_faces_index=self.reference_faces_index,
                             model=self.model,
                             upscale_options=self.upscale_options,
                         )
