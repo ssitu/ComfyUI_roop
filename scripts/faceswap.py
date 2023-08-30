@@ -132,6 +132,10 @@ class FaceSwapScript(scripts.Script):
         enable,
         faces_index,
         reference_faces_index,
+        face_order,
+        reverse_order,
+        reference_order,
+        reverse_reference_order,
         model,
         face_restorer_name,
         face_restorer_visibility,
@@ -176,6 +180,10 @@ class FaceSwapScript(scripts.Script):
                             reference_faces_index=self.reference_faces_index,
                             model=self.model,
                             upscale_options=self.upscale_options,
+                            face_order=face_order,
+                            reverse_order=reverse_order,
+                            reference_order=reference_order,
+                            reverse_reference_order=reverse_reference_order,
                         )
                         p.init_images[i] = result.image()
             else:

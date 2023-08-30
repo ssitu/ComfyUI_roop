@@ -77,7 +77,14 @@ def upscale_image(image: Image, upscale_options: UpscaleOptions):
     return result_image
 
 
-def get_face_single(img_data: np.ndarray, face_index=0, det_size=(640, 640)):
+def order_largest_smallest(faces, reverse=False):
+    def area(face):
+        x1, y1, x2, y2 = face.bbox
+        return (x2 - x1) * (y2 - y1)
+    return sorted(faces, key=lambda x: area(x), reverse=not reverse)
+
+
+def get_face_single(img_data: np.ndarray, face_index=0, det_size=(640, 640), sorter="left to right", reverse_order=False):
     face_analyser = insightface.app.FaceAnalysis(name="buffalo_l", providers=providers, root=insightface_path)
 
     buffalo_path = os.path.join(insightface_models_path, "buffalo_l.zip")
@@ -93,7 +100,13 @@ def get_face_single(img_data: np.ndarray, face_index=0, det_size=(640, 640)):
         return get_face_single(img_data, face_index=face_index, det_size=det_size_half)
 
     try:
-        return sorted(face, key=lambda x: x.bbox[0])[face_index]
+        if sorter == "left to right":
+            result = sorted(face, key=lambda x: x.bbox[0], reverse=reverse_order)
+        elif sorter == "up to down":
+            result = sorted(face, key=lambda x: x.bbox[1], reverse=reverse_order)
+        elif sorter == "largest to smallest":
+            result = order_largest_smallest(face, reverse=reverse_order)
+        return result[face_index]
     except IndexError:
         return None
 
@@ -116,6 +129,10 @@ def swap_face(
     faces_index: Set[int] = {0},
     reference_faces_index: Set[int] = {0},
     upscale_options: Union[UpscaleOptions, None] = None,
+    face_order: str = "left to right",
+    reverse_order: bool = False,
+    reference_order: str = "left to right",
+    reverse_reference_order: bool = False,
 ) -> ImageResult:
     result_image = target_img
     converted = convert_to_sd(target_img)
@@ -138,7 +155,7 @@ def swap_face(
         #
         source_faces = []
         for face_num in reference_faces_index:
-            source_face = get_face_single(source_img, face_index=face_num)
+            source_face = get_face_single(source_img, face_index=face_num, sorter=reference_order, reverse_order=reverse_reference_order)
             if source_face is not None:
                 source_faces.append(source_face)
             else:
@@ -152,7 +169,7 @@ def swap_face(
             face_swapper = getFaceSwapModel(model_path)
 
             for face_num in faces_index:
-                target_face = get_face_single(target_img, face_index=face_num)
+                target_face = get_face_single(target_img, face_index=face_num, sorter=face_order, reverse_order=reverse_order)
                 if target_face is not None:
 
                     source_face = source_faces[source_face_idx]
