@@ -16,7 +16,7 @@ A total of about 854 MB worth of extra models will be installed during installat
 
 ## Usage
 
-Nodes can be found in the node menu under 'roop`:
+Nodes can be found in the node menu under `roop`:
 
 |Node|Description|
 | --- | --- |
