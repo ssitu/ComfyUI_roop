@@ -20,7 +20,8 @@ Nodes can be found in the node menu under `roop`:
 
 |Node|Description|
 | --- | --- |
-| roop | Only has the inputs related to face swapping from the original script |
+| roop | Only has the inputs related to face swapping from the original script. |
+| RoopImproved | Has extra inputs for more control. |
 
 ---
 #### Original description below:
